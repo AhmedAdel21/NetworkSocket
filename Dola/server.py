@@ -2,8 +2,30 @@ import sys
 import socket
 import selectors
 import types
+import pymongo
+
 
 sel = selectors.DefaultSelector()
+
+## connect to database and make the chatbot data
+myclient = pymongo.MongoClient("mongodb://localhost:27017/") #connect to MongoDB
+mydb = myclient["networkDB"] # create a database
+mydb.drop_collection("ChatBot")
+userData = mydb["ChatBot"] # create a collection 
+replies = open("replies.txt")
+repliesData = replies.read()
+data = []
+fisrt = repliesData.split("\n")
+for i in fisrt:
+    data.append(i.split(":"))
+
+sendingData = []
+for i in data:
+    sendingData.append({i[0]:' '.join(map(str, i[1:]))})
+
+userData.insert_many(sendingData)
+
+
 
 HOST = socket.gethostbyname(socket.gethostname())
 print("host : ",HOST)
@@ -54,8 +76,15 @@ def service_connection(key, mask):
             sock.close()
     if mask & selectors.EVENT_WRITE:
         if data.outb:
-            for client in clientsList:
-                client.send( bytes(str("User "),FORMAT) + bytes(str(key.fd),FORMAT) + bytes(str(": "),FORMAT) + data.outb)
+            if len(clientsList) == 1:
+                sock.send( bytes(str("User "),FORMAT) + bytes(str(key.fd),FORMAT) + bytes(str(": "),FORMAT) + data.outb)
+                for x in userData.find({},{ "_id": 0, data.outb.decode(): 1,}):
+                    if x:
+                        print(x[data.outb.decode()])
+                        sock.send( bytes(str("\n"),FORMAT) +bytes(str("DoLaBot "),FORMAT) + bytes(str(": "),FORMAT) + bytes(str(x[data.outb.decode()]),FORMAT))
+            else:
+                for client in clientsList:
+                    client.send( bytes(str("User "),FORMAT) + bytes(str(key.fd),FORMAT) + bytes(str(": "),FORMAT) + data.outb)       
             data.outb = b''
 
 while True:
@@ -67,3 +96,4 @@ while True:
             service_connection(key, mask)
 
 sel.close()
+userData.drop()

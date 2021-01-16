@@ -3,18 +3,50 @@ import pymongo
 myclient = pymongo.MongoClient("mongodb://localhost:27017/") #connect to MongoDB
 
 mydb = myclient["networkDB"] # create a database
-
+mydb.drop_collection("users")
 print(myclient.list_database_names()) # all database in the system
 
-userData = mydb["users"] # create a collection 
+userData = mydb["ChatBot"] # create a collection 
 
 print(mydb.list_collection_names()) # print all the collection in my DB
+for i in mydb.list_collection_names():
+    if i == "dolaBot":
+        print("dasdsad")
+d = open("replies.txt")
+p = d.read()
+data = []
+fisrt = p.split("\n")
+for i in fisrt:
+    data.append(i.split(":"))
+
+# print(data)
+sendingData = []
+for i in data:
+    sendingData.append({i[0]:' '.join(map(str, i[1:]))})
+
+# print(sendingData)
+userData.insert_many(sendingData)
+# for x in userData.find():
+#   print(x)
+dola = "hello"
+for x in userData.find({},{ "_id": 0, dola: 1,}):
+    if x:
+        print(x[dola])
+  
+
+userData.drop()
+# print(x.inserted_ids) 
+
+# rep =p.split(" ")
+# for i in rep:
 
 #####
 
 # myUser = { "name": "admin", "password": "123456" }
-
-# x = userData.insert_one(myUser)
+# for i in mongoData:
+#     print(mongoData[i])
+# print(mongoData)
+# x = userData.insert_one(mongoData)
 
 # print(x.inserted_id) 
 
@@ -25,7 +57,7 @@ print(mydb.list_collection_names()) # print all the collection in my DB
 #   { "name": "Hannah", "password": "057257"},
 
 # ]
-# x = userData.insert_many(mylist)
+# x = userData.insert_many(mongoData[0])
 
 # print(x.inserted_ids) 
 
